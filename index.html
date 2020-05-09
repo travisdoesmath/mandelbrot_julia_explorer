@@ -1,0 +1,104 @@
+<html>
+<head>
+	<style>
+	</style>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.16.0/d3.js"></script>
+</head>
+<body>
+	<canvas id="mandelbrot" width="500" height="500"></canvas>
+	<canvas id="julia" width="500" height="500"></canvas>
+</body>
+<script>
+let width = 500;
+let height = 500;
+
+let iterDepth = 30;
+
+let xMin = -2.25,
+	xMax = 1.25,
+	yMin = -1.75,
+	yMax = 1.75;
+
+let xScale = d3.scaleLinear().domain([xMin, xMax]).range([0, width])
+let yScale = d3.scaleLinear().domain([yMin, yMax]).range([height, 0])
+
+let xJScale = d3.scaleLinear().domain([-2, 2]).range([0, width])
+let yJScale = d3.scaleLinear().domain([-2, 2]).range([height, 0])
+
+let mCanvas = d3.select("#mandelbrot")
+
+mCanvas.on('mousemove', d => {
+		drawJulia(xScale.invert(d3.event.pageX), yScale.invert(d3.event.pageY))
+		console.log(d3.event.pageX, d3.event.pageY);
+	})
+let mContext = mCanvas.node().getContext('2d');
+let jCanvas = d3.select("#julia");
+let jContext = jCanvas.node().getContext('2d');
+
+let mImageData = mContext.createImageData(width, height);
+let jImageData = jContext.createImageData(width, height);
+
+function cSquare(real, imag) {
+	return [real * real - imag * imag, 2*real*imag]
+}
+
+function cAdd(z1, z2) {
+	return [z1[0] + z2[0], z1[1] + z2[1]]
+}
+
+function magSq(z) {
+	return z[0] * z[0] + z[1] * z[1];
+}
+
+function mIter(z, c) {
+	return cAdd(cSquare(z[0], z[1]), c)
+}
+
+function jIter(z, c) {
+	return cAdd(cSquare(z[0], z[1]), c)
+}
+
+
+// Draw Mandelbrot
+for (let x = 0; x < width; x++) {
+	for (let y = 0; y < height; y++) {
+		var real = xScale.invert(x);
+		var imag = yScale.invert(y);
+		c = [real, imag];
+		mz = [real, imag];
+		let count = 0;
+		i = 4 * (y * width + x)
+		while (count < iterDepth && magSq(mz) < 4) {
+			count++;
+			mz = mIter(mz, c);
+		}
+		count == iterDepth ? null : mImageData.data[i] = 255 - 255 / count;
+		mImageData.data[i + 3] = 255;
+	}
+}
+mContext.putImageData(mImageData, 0, 0);
+
+function drawJulia(jReal, jImag) {
+	for (let x = 0; x < width; x++) {
+		for (let y = 0; y < height; y++) {
+			var real = xJScale.invert(x);
+			var imag = yJScale.invert(y);
+			c = [jReal, jImag];
+			jz = [real, imag];
+			let count = 0;
+			i = 4 * (y * width + x)
+			while (count < iterDepth && magSq(jz) < 4) {
+				count++;
+				jz = jIter(jz, c);
+			}
+			count == iterDepth ? jImageData.data[i] = 0 : jImageData.data[i] = 255 - 255 / count;
+			jImageData.data[i + 3] = 255;
+		}
+	}
+
+	jContext.putImageData(jImageData, 0, 0);
+}
+
+//drawJulia(0.70176, -0.3842)
+
+</script>
