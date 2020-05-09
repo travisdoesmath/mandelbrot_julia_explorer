@@ -29,7 +29,6 @@ let mCanvas = d3.select("#mandelbrot")
 
 mCanvas.on('mousemove', d => {
 		drawJulia(xScale.invert(d3.event.pageX), yScale.invert(d3.event.pageY))
-		console.log(d3.event.pageX, d3.event.pageY);
 	})
 let mContext = mCanvas.node().getContext('2d');
 let jCanvas = d3.select("#julia");
@@ -100,5 +99,6 @@ function drawJulia(jReal, jImag) {
 }
 
 //drawJulia(0.70176, -0.3842)
+drawJulia(xScale.invert(234), yScale.invert(185))
 
 </script>
