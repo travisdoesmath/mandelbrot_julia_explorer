@@ -4,17 +4,24 @@
     <meta property="og:description" content="Exploring the connection between the Mandelbrot set and quadratic Julia sets">
     <meta property="og:image" content="https://travisdoesmath.github.io/mandelbrot_julia_explorer/preview.png">
     <meta property="og:url" content="https://travisdoesmath.github.io/mandelbrot_julia_explorer/">
-
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<style>
 
-		.column {
-			max-width: 960px;
-			position: relative;
-			display: block;
-			margin: 0 auto;
-			padding: 0 10px;
-		}
 
+
+
+
+		
+		@media screen and (min-width:1060px) {
+				
+			.column {
+				max-width: 1000px;
+				position: relative;
+				display: block;
+				margin: 0 auto;
+				padding: 0 10px;
+			}
+		
 		h1 {
 			font-family: "Helvetica Neue", Helvetica, sans-serif;
 			font-size: 46px;
@@ -23,31 +30,96 @@
 			margin: 0.1em 0;
 		}
 
-		.mandelbrot {
-			position:absolute;
-			/* top:0px; */
-			left:0px;
+			#plot-container {
+				display: flex;
+			}
+
+			#mandelbrot-container {
+				flex: 1;
+				position:relative;
+				
+				width: 100%;
+				height: 100%;
+			}
+
+			.mandelbrot {
+			}
+
+			svg.mandelbrot {
+				pointer-events: none;
+				position:absolute;
+				top:0px;
+				left:0px;
+			}
+
+			#julia {
+				flex: 1;
+				/* position:absolute; */
+				/* top:0px; */
+				/* left:500px; */
+			}
 		}
 
-		svg.mandelbrot {
-			pointer-events: none;
+		@media screen and (max-width:1060px) {
+			h1 {
+				font-family: "Helvetica Neue", Helvetica, sans-serif;
+				font-size: 20px;
+				font-weight: 500;
+				letter-spacing: -1px;
+				margin: 0.1em 0;
+			}
+
+			#plot-container {
+				display: flex;
+				flex-direction: column;
+			}
+
+			.mandelbrot {
+				width: 100%;
+			}
+
+			.flex-wrapper {
+				flex: 1;
+			}
+
+			#mandelbrot-container {
+				width: 100%;
+			}
+
+			svg.mandelbrot {
+				position:absolute;
+				left: 0;
+				height: inherit;
+				width: inherit;
+				pointer-events: none;			
+			}
+
+			#julia {
+				width: 100%;
+			}
+
 		}
 
-		#julia {
-			position:absolute;
-			/* top:0px; */
-			left:500px;
-		}
+
+
 	</style>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.16.0/d3.js"></script>
 </head>
 <body>
     <div class="column" id="body">
         <h1 class="title">Mandelbrot & Julia Set Connection</h1>
-		<div>
-			<canvas id="mandelbrot" class="mandelbrot" width="500" height="500"></canvas>
-			<svg class="mandelbrot" width="500" height="500"></svg>
-			<canvas id="julia" width="500" height="500"></canvas>
+		<div id='plot-container'>
+			<div class='flex-wrapper'>
+				<div id='mandelbrot-container'>
+					<canvas id="mandelbrot" class="mandelbrot" width="500" height="500"></canvas>
+					<svg class="mandelbrot" width="500" height="500" viewbox="0 0 500 500"></svg>
+				</div>
+			</div>
+			<div class='flex-wrapper'>
+				<div id='julia-container'>
+					<canvas id="julia" width="500" height="500"></canvas>
+				</div>
+			</div>			
 		</div>
 	</div>
 </body>
@@ -73,12 +145,35 @@ let mCanvas = d3.select("#mandelbrot")
 
 isMouseover = false;
 
-mCanvas.on('mousemove', d => {
-		var mouseX = d3.event.layerX || d3.event.offsetX;
-		var mouseY = d3.event.layerY || d3.event.offsetY;
-		drawDot(mouseX, mouseY)
-		drawJulia(xMScale.invert(mouseX), yMScale.invert(mouseY))
-	})
+function mouseHandler(d) {
+	var mouseX = d3.event.layerX || d3.event.offsetX;
+	var mouseY = d3.event.layerY || d3.event.offsetY;
+	mouseX = mCanvas.node().getBoundingClientRect().width / 500 * mouseX;
+	mouseY = mCanvas.node().getBoundingClientRect().height / 500 * mouseY;
+
+
+	drawDot(mouseX, mouseY)
+	drawJulia(xMScale.invert(mouseX), yMScale.invert(mouseY))
+}
+
+function touchHandler() {
+	isMouseover = true;
+	d3.event.preventDefault();
+
+	touchX = d3.touches(this)[0][0]
+	touchY = d3.touches(this)[0][1]
+
+	touchX = (touchX / mCanvas.node().getBoundingClientRect().width) * 500;
+	touchY = (touchY / mCanvas.node().getBoundingClientRect().height) * 500;
+
+
+	drawDot(touchX, touchY)
+	drawJulia(xMScale.invert(touchX), yMScale.invert(touchY))
+}
+
+mCanvas.on('mousemove', mouseHandler)
+	.on('touchstart', touchHandler)
+	.on('touchmove', touchHandler)
 	.on('mouseenter', d => {
 		isMouseover = true
 	})
@@ -156,6 +251,19 @@ function drawJulia(jReal, jImag) {
 }
 
 function drawDot(x, y) {
+	// d3.select('svg.mandelbrot').selectAll('.coords')
+	// 	.data([0])
+	// 	.join(
+	// 		enter => enter.append('text')
+	// 			.attr('x', 10)
+	// 			.attr('y', 490)
+	// 			.attr('fill', '#666')
+	// 			.attr('class', 'coords')
+	// 			.attr('font-family', "Arial, Helvetica, sans-serif")
+	// 			,
+	// 		update => update.text(`${xMScale.invert(x).toFixed(4)} + ${yMScale.invert(y).toFixed(4)}i`)
+				
+	// 	)
 	let dot = d3.select('svg.mandelbrot').selectAll('.dot')
 		.data([{x:x, y:y}])
 		.join(
